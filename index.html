@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Трекер">
+<meta name="theme-color" content="#0C0C0F">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Мой трекер</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0C0C0F;--s1:#131318;--s2:#1A1A22;--s3:#222230;
+  --border:#252535;--border2:#2E2E42;
+  --gold:#D4A853;--gold2:#F0C878;--green:#6BAF8A;
+  --blue:#6B9FBF;--rose:#BF7B8A;--purple:#9B8FD4;
+  --text:#E8E4DC;--text2:#A8A4A0;--text3:#606070;--r:14px;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden}
+
+/* NAV */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,13,18,0.97);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 8px;background:none;border:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:0.5px;cursor:pointer;transition:color 0.2s}
+.nav-btn.active{color:var(--gold)}
+.nav-icon{font-size:19px;line-height:1}
+
+/* PAGES */
+.page{display:none;padding:20px 16px 100px;max-width:480px;margin:0 auto}
+.page.active{display:block}
+
+/* HEADER */
+.page-header{padding:52px 16px 0;max-width:480px;margin:0 auto 4px}
+.page-label{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;font-style:italic;color:var(--text);line-height:1.2}
+.page-sub{font-size:12px;color:var(--text3);margin-top:4px}
+
+/* INSTALL BANNER */
+.install-banner{background:linear-gradient(135deg,rgba(212,168,83,0.12),rgba(107,175,138,0.08));border:1px solid rgba(212,168,83,0.25);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:none;align-items:center;gap:12px}
+.install-banner.show{display:flex}
+.install-text{flex:1;font-size:12px;color:var(--text2);line-height:1.4}
+.install-text strong{color:var(--gold);display:block;margin-bottom:2px}
+.install-btn-sm{background:var(--gold);color:#0C0C0F;border:none;border-radius:8px;padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;animation:fadeUp 0.35s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card:nth-child(1){animation-delay:.05s}.card:nth-child(2){animation-delay:.1s}.card:nth-child(3){animation-delay:.15s}.card:nth-child(4){animation-delay:.2s}.card:nth-child(5){animation-delay:.25s}
+.card-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-title span{font-size:14px}
+
+/* SLIDERS */
+.metric-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.metric-row:last-child{margin-bottom:0}
+.metric-label{font-size:13px;color:var(--text2);width:118px;flex-shrink:0}
+.metric-val{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--gold);width:26px;text-align:center;flex-shrink:0}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--s3);border-radius:2px;outline:none;flex:1}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 10px rgba(212,168,83,0.35)}
+
+/* MOOD */
+.mood-row{display:flex;gap:8px;justify-content:space-between}
+.mood-btn{flex:1;aspect-ratio:1;background:var(--s2);border:1.5px solid var(--border);border-radius:12px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.mood-btn.selected{border-color:var(--gold);background:rgba(212,168,83,0.12);transform:scale(1.08)}
+
+/* CHECKBOXES */
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check-item{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.2s;user-select:none}
+.check-item.on{background:rgba(107,175,138,0.1);border-color:var(--green)}
+.check-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all 0.2s}
+.check-item.on .check-box{background:var(--green);border-color:var(--green);color:#0C0C0F}
+.check-text{font-size:12px;color:var(--text2);line-height:1.3}
+.check-item.on .check-text{color:var(--text)}
+
+/* TEXTAREA */
+textarea{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;padding:12px;resize:none;outline:none;transition:border-color 0.2s;margin-top:8px}
+textarea:focus{border-color:var(--gold)}
+textarea::placeholder{color:var(--text3)}
+
+/* SAVE */
+.save-btn{width:100%;padding:16px;background:var(--gold);color:#0C0C0F;border:none;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;transition:opacity 0.2s,transform 0.15s}
+.save-btn:active{opacity:0.85;transform:scale(0.99)}
+
+/* TOAST */
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#0C0C0F;padding:12px 24px;border-radius:30px;font-weight:600;font-size:13px;opacity:0;transition:all 0.3s;z-index:300;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;animation:fadeUp 0.3s ease both}
+.stat-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;line-height:1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.trend-up{color:var(--green)}.trend-down{color:var(--rose)}.trend-same{color:var(--gold)}
+
+/* CHART */
+.chart-tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chart-tabs::-webkit-scrollbar{display:none}
+.chart-tab{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--s2);color:var(--text3);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0}
+.chart-tab.active{background:var(--gold);border-color:var(--gold);color:#0C0C0F}
+.chart-wrap{width:100%;overflow-x:auto;padding-bottom:4px}
+
+/* WEEK STRIP */
+.week-strip{display:flex;gap:6px;margin-bottom:4px}
+.day-dot{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.day-dot-label{font-size:9px;color:var(--text3);letter-spacing:0.5px}
+.day-dot-circle{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text3)}
+.day-dot-circle.has-data{border-color:var(--gold);color:var(--gold)}
+.day-dot-circle.today{background:var(--gold);color:#0C0C0F;border-color:var(--gold)}
+
+/* INSIGHT */
+.insight-card{background:linear-gradient(135deg,rgba(212,168,83,0.08),rgba(107,175,138,0.05));border:1px solid rgba(212,168,83,0.2);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.insight-title{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.insight-text{font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:var(--text2);line-height:1.6}
+
+/* HISTORY */
+.history-item{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;animation:fadeUp 0.3s ease both}
+.history-date{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.history-metrics{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.hm{background:var(--s2);border-radius:8px;padding:5px 9px;font-size:11px;color:var(--text2)}
+.hm strong{color:var(--text);font-weight:600}
+.history-note{font-size:12px;color:var(--text3);font-style:italic;line-height:1.5;border-top:1px solid var(--border);padding-top:8px;margin-top:6px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:0.4}
+
+/* SETTINGS */
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{font-size:14px;color:var(--text2)}
+.settings-label small{display:block;font-size:11px;color:var(--text3);margin-top:2px}
+.settings-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.settings-btn:active{background:var(--s3)}
+.settings-btn.danger{border-color:var(--rose);color:var(--rose)}
+
+.hint-box{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:12px}
+.hint-box strong{color:var(--gold)}
+
+.steps{counter-reset:steps}
+.step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--gold);color:#0C0C0F;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:var(--text2);line-height:1.5}
+.step-text strong{color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- HEADERS -->
+<div class="page-header" id="header-dash">
+  <div class="page-label">Обзор</div>
+  <div class="page-title">Твой дашборд</div>
+  <div class="page-sub" id="dash-date"></div>
+</div>
+<div class="page-header" id="header-log" style="display:none">
+  <div class="page-label">Ежедневно</div>
+  <div class="page-title">Запись дня</div>
+  <div class="page-sub" id="log-date"></div>
+</div>
+<div class="page-header" id="header-chart" style="display:none">
+  <div class="page-label">Динамика</div>
+  <div class="page-title">Графики</div>
+  <div class="page-sub">Тенденции за последние 14 дней</div>
+</div>
+<div class="page-header" id="header-more" style="display:none">
+  <div class="page-label">Управление</div>
+  <div class="page-title">Настройки</div>
+  <div class="page-sub">Данные, экспорт, установка</div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dash">
+  <div class="install-banner" id="installBanner">
+    <div class="install-text">
+      <strong>📱 Установить как приложение</strong>
+      Работает офлайн, иконка на экране
+    </div>
+    <button class="install-btn-sm" onclick="triggerInstall()">Установить</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📅</span> Эта неделя</div>
+    <div class="week-strip" id="weekStrip"></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card" style="animation-delay:.05s">
+      <div class="stat-label">Энергия</div>
+      <div class="stat-val trend-same" id="avg-energy">—</div>
+      <div class="stat-sub">среднее / 7 дней</div>
+    </div>
+    <div class="stat-card" style="animation-delay:.1s">
+      <div class="stat-label">Настроение</div>
+      <div class="stat-val trend-same" id="avg-mood">—</div>
+      <div class="stat-sub">среднее / 7 дней</div>
+    </div>
+    <div class="stat-card" style="animation-delay:.15s">
+      <div class="stat-label">Сон</div>
+      <div class="stat-val trend-same" id="avg-sleep">—</div>
+      <div class="stat-sub">ч. среднее</div>
+    </div>
+    <div class="stat-card" style="animation-delay:.2s">
+      <div class="stat-label">Записей</div>
+      <div class="stat-val" id="total-entries" style="color:var(--text)">0</div>
+      <div class="stat-sub">всего дней</div>
+    </div>
+  </div>
+
+  <div class="insight-card">
+    <div class="insight-title">✦ Наблюдение</div>
+    <div class="insight-text" id="insightText">Начни вести записи — здесь появятся закономерности твоих состояний.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>✅</span> Привычки за 7 дней</div>
+    <div id="habitsStats"><div style="color:var(--text3);font-size:12px">Нет данных</div></div>
+  </div>
+</div>
+
+<!-- LOG -->
+<div class="page" id="page-log">
+  <div class="card">
+    <div class="card-title"><span>🎭</span> Общее ощущение</div>
+    <div class="mood-row">
+      <button class="mood-btn" data-mood="1" onclick="selectMood(1)">😔</button>
+      <button class="mood-btn" data-mood="2" onclick="selectMood(2)">😕</button>
+      <button class="mood-btn" data-mood="3" onclick="selectMood(3)">😐</button>
+      <button class="mood-btn" data-mood="4" onclick="selectMood(4)">🙂</button>
+      <button class="mood-btn" data-mood="5" onclick="selectMood(5)">😊</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📊</span> Метрики дня</div>
+    <div class="metric-row"><div class="metric-label">Энергия</div><input type="range" min="1" max="10" value="5" oninput="updateVal(this,'ve')" id="sl-energy"><div class="metric-val" id="ve">5</div></div>
+    <div class="metric-row"><div class="metric-label">Настроение</div><input type="range" min="1" max="10" value="5" oninput="updateVal(this,'vm')" id="sl-mood"><div class="metric-val" id="vm">5</div></div>
+    <div class="metric-row"><div class="metric-label">Тревога</div><input type="range" min="1" max="10" value="3" oninput="updateVal(this,'va')" id="sl-anx"><div class="metric-val" id="va">3</div></div>
+    <div class="metric-row"><div class="metric-label">Мотивация</div><input type="range" min="1" max="10" value="5" oninput="updateVal(this,'vmo')" id="sl-mot"><div class="metric-val" id="vmo">5</div></div>
+    <div class="metric-row"><div class="metric-label">Социальность</div><input type="range" min="1" max="10" value="5" oninput="updateVal(this,'vs')" id="sl-soc"><div class="metric-val" id="vs">5</div></div>
+    <div class="metric-row"><div class="metric-label">Тело</div><input type="range" min="1" max="10" value="5" oninput="updateVal(this,'vb')" id="sl-body"><div class="metric-val" id="vb">5</div></div>
+    <div class="metric-row"><div class="metric-label">Продуктивность</div><input type="range" min="1" max="10" value="5" oninput="updateVal(this,'vp')" id="sl-prod"><div class="metric-val" id="vp">5</div></div>
+    <div class="metric-row"><div class="metric-label">Избегание</div><input type="range" min="1" max="10" value="1" oninput="updateVal(this,'vav')" id="sl-avoid"><div class="metric-val" id="vav">1</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🌙</span> Сон</div>
+    <div class="metric-row"><div class="metric-label">Часов спал</div><input type="range" min="2" max="12" value="7" step="0.5" oninput="updateVal(this,'vsh')" id="sl-sleeph"><div class="metric-val" id="vsh">7</div></div>
+    <div class="metric-row"><div class="metric-label">Качество сна</div><input type="range" min="1" max="10" value="5" oninput="updateVal(this,'vsq')" id="sl-sleepq"><div class="metric-val" id="vsq">5</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>✅</span> Привычки</div>
+    <div class="check-grid" id="habitsGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>✍️</span> Заметки</div>
+    <textarea id="n-moment" placeholder="Момент дня — что запомнилось..." rows="2"></textarea>
+    <textarea id="n-insight" placeholder="Инсайт или мысль (если есть)..." rows="2" style="margin-top:8px"></textarea>
+    <textarea id="n-poetry" placeholder="Строчка для стихов (если есть)..." rows="2" style="margin-top:8px"></textarea>
+  </div>
+
+  <button class="save-btn" onclick="saveLog()">Сохранить день</button>
+</div>
+
+<!-- CHART -->
+<div class="page" id="page-chart">
+  <div class="chart-tabs" id="chartTabs"></div>
+  <div class="card">
+    <div class="chart-wrap"><svg id="chartSvg"></svg></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔗</span> Закономерности</div>
+    <div id="correlations" style="font-size:13px;color:var(--text2);line-height:1.8"></div>
+  </div>
+</div>
+
+<!-- MORE -->
+<div class="page" id="page-more">
+
+  <!-- iOS install -->
+  <div class="card" id="iosInstallCard" style="display:none">
+    <div class="card-title"><span>📱</span> Установить на iPhone</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Нажми кнопку <strong>"Поделиться"</strong> (квадрат со стрелкой) внизу Safari</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Выбери <strong>"На экран «Домой»"</strong></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Нажми <strong>"Добавить"</strong> — иконка появится на рабочем столе</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">После установки работает без браузера и офлайн</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>💾</span> Данные</div>
+    <div class="settings-row">
+      <div class="settings-label">
+        Экспорт в CSV
+        <small>Открывается в Excel / Google Sheets</small>
+      </div>
+      <button class="settings-btn" onclick="exportCSV()">Скачать</button>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">
+        Всего записей
+        <small id="total-records-label">—</small>
+      </div>
+      <button class="settings-btn" onclick="showHistory()">История</button>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">
+        Очистить всё
+        <small>Удалить все данные</small>
+      </div>
+      <button class="settings-btn danger" onclick="clearAll()">Удалить</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>☁️</span> Google Sheets — надёжное хранение</div>
+    <div class="hint-box">
+      <strong>Зачем:</strong> данные из браузера могут стереться при очистке кэша. Google Sheets хранит их вечно и доступны с любого устройства.<br><br>
+      <strong>Как подключить:</strong>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Открой <strong>script.google.com</strong> → "Новый проект"</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Вставь код из кнопки ниже → нажми <strong>"Развернуть"</strong> → "Веб-приложение" → доступ "Все"</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Скопируй URL приложения и вставь в поле ниже</div></div>
+    </div>
+    <button class="settings-btn" onclick="copyGASCode()" style="width:100%;margin-bottom:10px">Скопировать код для Google Apps Script</button>
+    <input type="text" id="gas-url" placeholder="Вставь URL Google Apps Script сюда..." style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:12px;outline:none">
+    <button class="settings-btn" onclick="saveGASUrl()" style="width:100%;margin-top:8px">Сохранить и синхронизировать</button>
+  </div>
+
+  <!-- History inline -->
+  <div id="historySection">
+    <div class="card-title" style="padding:0 0 8px"><span>📋</span> История записей</div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="goPage('dash',this)"><div class="nav-icon">◈</div>Дашборд</button>
+  <button class="nav-btn" onclick="goPage('log',this)"><div class="nav-icon">✦</div>День</button>
+  <button class="nav-btn" onclick="goPage('chart',this)"><div class="nav-icon">∿</div>Графики</button>
+  <button class="nav-btn" onclick="goPage('more',this)"><div class="nav-icon">⋯</div>Ещё</button>
+</nav>
+
+<script>
+// ── STORAGE ──
+const KEY = 'tracker_v2';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch(e) { return []; } };
+const save = d => localStorage.setItem(KEY, JSON.stringify(d));
+
+// ── STATE ──
+let selMood = 3;
+const HABITS = ['Движение','Прогулка','Нормально поел','Душ','Творчество','Чтение','Рабочее действие','Контакт с людьми'];
+const hChecked = {};
+HABITS.forEach((_,i) => hChecked[i] = false);
+let chartMetric = 'energy';
+let deferredPrompt = null;
+
+const METRICS = [
+  {key:'energy',label:'Энергия',color:'#D4A853'},
+  {key:'mood',label:'Настроение',color:'#6BAF8A'},
+  {key:'anxiety',label:'Тревога',color:'#BF7B8A'},
+  {key:'motiv',label:'Мотивация',color:'#9B8FD4'},
+  {key:'sleepq',label:'Качество сна',color:'#6B9FBF'},
+  {key:'social',label:'Социальность',color:'#C4A87B'},
+  {key:'prod',label:'Продуктивность',color:'#7BC4B4'},
+  {key:'avoid',label:'Избегание',color:'#C47B9B'},
+];
+
+// ── PWA ──
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('show');
+  showToast('✓ Приложение установлено!');
+});
+
+function triggerInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  }
+}
+
+// ── INIT ──
+window.onload = () => {
+  const now = new Date();
+  const days = ['вс','пн','вт','ср','чт','пт','сб'];
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const str = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+  document.getElementById('dash-date').textContent = str;
+  document.getElementById('log-date').textContent = str;
+
+  // iOS detection
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone;
+  if (isIOS) document.getElementById('iosInstallCard').style.display = 'block';
+
+  // Register SW
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+
+  initHabits();
+  buildChartTabs();
+  selectMood(3);
+  renderDash();
+  renderHistory();
+};
+
+// ── NAV ──
+function goPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page-header').forEach(h => h.style.display = 'none');
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('header-'+name).style.display = 'block';
+  if (name==='dash') renderDash();
+  if (name==='chart') renderChart();
+  if (name==='more') { renderHistory(); document.getElementById('total-records-label').textContent = load().length + ' записей'; }
+}
+
+function showHistory() {
+  document.getElementById('historySection').scrollIntoView({behavior:'smooth'});
+}
+
+// ── FORM ──
+function selectMood(v) {
+  selMood = v;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('selected', +b.dataset.mood === v));
+}
+
+function updateVal(el, id) { document.getElementById(id).textContent = el.value; }
+
+function initHabits() {
+  const g = document.getElementById('habitsGrid');
+  HABITS.forEach((h,i) => {
+    const el = document.createElement('div');
+    el.className = 'check-item'; el.id = 'h'+i;
+    el.innerHTML = `<div class="check-box" id="cb${i}"></div><div class="check-text">${h}</div>`;
+    el.onclick = () => {
+      hChecked[i] = !hChecked[i];
+      el.classList.toggle('on', hChecked[i]);
+      document.getElementById('cb'+i).textContent = hChecked[i] ? '✓' : '';
+    };
+    g.appendChild(el);
+  });
+}
+
+// ── SAVE ──
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function saveLog() {
+  const data = load();
+  const entry = {
+    date: todayKey(), ts: Date.now(),
+    moodEmoji: selMood,
+    energy: +document.getElementById('sl-energy').value,
+    mood: +document.getElementById('sl-mood').value,
+    anxiety: +document.getElementById('sl-anx').value,
+    motiv: +document.getElementById('sl-mot').value,
+    social: +document.getElementById('sl-soc').value,
+    body: +document.getElementById('sl-body').value,
+    prod: +document.getElementById('sl-prod').value,
+    avoid: +document.getElementById('sl-avoid').value,
+    sleeph: +document.getElementById('sl-sleeph').value,
+    sleepq: +document.getElementById('sl-sleepq').value,
+    habits: HABITS.map((_,i) => hChecked[i]),
+    notes: {
+      moment: document.getElementById('n-moment').value.trim(),
+      insight: document.getElementById('n-insight').value.trim(),
+      poetry: document.getElementById('n-poetry').value.trim(),
+    }
+  };
+  const idx = data.findIndex(d => d.date === entry.date);
+  if (idx >= 0) data[idx] = entry; else data.push(entry);
+  data.sort((a,b) => b.date.localeCompare(a.date));
+  save(data);
+
+  // Sync to Google Sheets if configured
+  const gasUrl = localStorage.getItem('gas_url');
+  if (gasUrl) syncToSheets(gasUrl, entry);
+
+  showToast('✓ День сохранён');
+  renderDash();
+}
+
+// ── TOAST ──
+function showToast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ── DASHBOARD ──
+function renderDash() {
+  const data = load();
+  const last7 = data.slice(0,7);
+  renderWeekStrip(data);
+
+  const avg = (arr, k) => {
+    const v = arr.filter(d=>d[k]!==undefined).map(d=>d[k]);
+    return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(1) : null;
+  };
+  const setV = (id, val, suf='') => {
+    const el = document.getElementById(id);
+    if (!val) { el.textContent='—'; el.className='stat-val'; return; }
+    el.textContent = val+suf;
+    const n = parseFloat(val);
+    el.className = 'stat-val '+(n>=6.5?'trend-up':n>=4?'trend-same':'trend-down');
+  };
+  setV('avg-energy', avg(last7,'energy'));
+  setV('avg-mood', avg(last7,'mood'));
+  setV('avg-sleep', avg(last7,'sleeph'), 'ч');
+  document.getElementById('total-entries').textContent = data.length;
+  generateInsight(data);
+  renderHabitsStats(last7);
+}
+
+function renderWeekStrip(data) {
+  const strip = document.getElementById('weekStrip'); strip.innerHTML='';
+  const dl = ['вс','пн','вт','ср','чт','пт','сб'];
+  const today = new Date();
+  for (let i=6;i>=0;i--) {
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const entry = data.find(e=>e.date===key);
+    const dot = document.createElement('div'); dot.className='day-dot';
+    const circle = document.createElement('div');
+    circle.className = 'day-dot-circle'+(i===0?' today':entry?' has-data':'');
+    circle.textContent = i===0?'●':entry?(entry.energy||'·'):'·';
+    const label = document.createElement('div'); label.className='day-dot-label'; label.textContent=dl[d.getDay()];
+    dot.appendChild(circle); dot.appendChild(label); strip.appendChild(dot);
+  }
+}
+
+function generateInsight(data) {
+  const el = document.getElementById('insightText');
+  if (data.length < 2) { el.textContent='Начни вести записи — здесь появятся закономерности твоих состояний.'; return; }
+  const last = data[0];
+  const prev = data.slice(1,5);
+  const avgE = prev.length ? prev.reduce((a,b)=>a+(b.energy||5),0)/prev.length : 5;
+  const insights = [];
+  if (last.energy > avgE+1.2) insights.push('Энергия заметно выросла по сравнению с предыдущими днями.');
+  if (last.energy < avgE-1.2) insights.push('Энергия ниже обычного — понаблюдай за сном и нагрузкой.');
+  if (last.sleeph >= 7.5 && last.energy >= 7) insights.push('Хороший сон даёт хорошую энергию — это работает.');
+  if (last.anxiety >= 7) insights.push('Тревога высокая. Что сейчас давит сильнее всего?');
+  if (last.social <= 3) insights.push('Мало контакта с людьми. Изоляция или осознанный выбор?');
+  if (last.habits && last.habits.filter(Boolean).length >= 5) insights.push('Закрыл 5+ привычек — сильный день по активности.');
+  if (last.avoid >= 7) insights.push('Высокое избегание — что именно избегал сегодня?');
+  el.textContent = insights.length ? insights[0] : `Последняя запись: энергия ${last.energy}/10, настроение ${last.mood}/10.`;
+}
+
+function renderHabitsStats(last7) {
+  const el = document.getElementById('habitsStats');
+  if (!last7.length) { el.innerHTML='<div style="color:var(--text3);font-size:12px">Нет данных</div>'; return; }
+  el.innerHTML = HABITS.map((h,i) => {
+    const count = last7.filter(d=>d.habits&&d.habits[i]).length;
+    const pct = Math.round(count/last7.length*100);
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--text2)">${h}</span>
+        <span style="font-size:12px;color:var(--gold);font-weight:600">${count}/${last7.length}</span>
+      </div>
+      <div style="background:var(--s3);border-radius:3px;height:4px">
+        <div style="background:var(--green);height:4px;border-radius:3px;width:${pct}%;transition:width 0.6s ease"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHART ──
+function buildChartTabs() {
+  const tabs = document.getElementById('chartTabs');
+  METRICS.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'chart-tab'+(m.key===chartMetric?' active':'');
+    btn.textContent = m.label;
+    btn.onclick = () => {
+      chartMetric = m.key;
+      document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      renderChart();
+    };
+    tabs.appendChild(btn);
+  });
+}
+
+function renderChart() {
+  const data = load().slice(0,14).reverse();
+  const metric = METRICS.find(m=>m.key===chartMetric);
+  const svg = document.getElementById('chartSvg');
+  const W = Math.min(window.innerWidth-32, 448);
+  const H = 180, pL=28, pR=12, pT=16, pB=30;
+  const cW=W-pL-pR, cH=H-pT-pB;
+  svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  if (data.length<2) { svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#606070" font-size="13" font-family="DM Sans">Нужно минимум 2 записи</text>`; renderCorrelations(load()); return; }
+  const vals = data.map(d=>d[metric.key]!==undefined?d[metric.key]:5);
+  const minV=Math.max(0,Math.min(...vals)-1), maxV=Math.min(10,Math.max(...vals)+1);
+  const xP=i=>pL+(i/(data.length-1))*cW;
+  const yP=v=>pT+cH-((v-minV)/(maxV-minV))*cH;
+  let grid='';
+  for (let v=Math.ceil(minV);v<=Math.floor(maxV);v+=2) {
+    const y=yP(v);
+    grid+=`<line x1="${pL}" y1="${y}" x2="${W-pR}" y2="${y}" stroke="#252535" stroke-width="1"/>`;
+    grid+=`<text x="${pL-4}" y="${y+4}" text-anchor="end" fill="#606070" font-size="9" font-family="DM Sans">${v}</text>`;
+  }
+  const area=`M ${xP(0)},${yP(vals[0])} `+data.map((_,i)=>`L ${xP(i)},${yP(vals[i])}`).join(' ')+` L ${xP(data.length-1)},${H-pB} L ${xP(0)},${H-pB} Z`;
+  const line=`M ${xP(0)},${yP(vals[0])} `+data.slice(1).map((_,i)=>`L ${xP(i+1)},${yP(vals[i+1])}`).join(' ');
+  let dots='';
+  data.forEach((d,i)=>{
+    dots+=`<circle cx="${xP(i)}" cy="${yP(vals[i])}" r="4" fill="${metric.color}" stroke="#0C0C0F" stroke-width="2"/>`;
+    if (i===0||i===data.length-1||i%3===0) dots+=`<text x="${xP(i)}" y="${H-6}" text-anchor="middle" fill="#606070" font-size="8" font-family="DM Sans">${d.date.slice(5).replace('-','/')}</text>`;
+  });
+  svg.innerHTML=`<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${metric.color}" stop-opacity="0.2"/><stop offset="100%" stop-color="${metric.color}" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#ag)"/><path d="${line}" fill="none" stroke="${metric.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
+  renderCorrelations(load());
+}
+
+function renderCorrelations(data) {
+  const el = document.getElementById('correlations');
+  if (data.length<5) { el.textContent='Нужно 5+ записей для анализа закономерностей.'; return; }
+  const corr=(k1,k2)=>{
+    const p=data.filter(d=>d[k1]&&d[k2]).map(d=>[d[k1],d[k2]]);
+    if (p.length<3) return null;
+    const n=p.length, mx=p.reduce((a,b)=>a+b[0],0)/n, my=p.reduce((a,b)=>a+b[1],0)/n;
+    const num=p.reduce((a,b)=>a+(b[0]-mx)*(b[1]-my),0);
+    const den=Math.sqrt(p.reduce((a,b)=>a+(b[0]-mx)**2,0)*p.reduce((a,b)=>a+(b[1]-my)**2,0));
+    return den?num/den:null;
+  };
+  const pairs=[
+    {a:'sleeph',b:'energy',la:'Сон',lb:'Энергия'},
+    {a:'sleeph',b:'mood',la:'Сон',lb:'Настроение'},
+    {a:'energy',b:'prod',la:'Энергия',lb:'Продуктивность'},
+    {a:'anxiety',b:'mood',la:'Тревога',lb:'Настроение'},
+    {a:'social',b:'mood',la:'Социальность',lb:'Настроение'},
+    {a:'avoid',b:'prod',la:'Избегание',lb:'Продуктивность'},
+    {a:'motiv',b:'prod',la:'Мотивация',lb:'Продуктивность'},
+  ];
+  const res=pairs.map(p=>({...p,r:corr(p.a,p.b)})).filter(p=>p.r!==null).sort((a,b)=>Math.abs(b.r)-Math.abs(a.r));
+  if (!res.length) { el.textContent='Продолжай вести записи — закономерности появятся.'; return; }
+  el.innerHTML=res.map(p=>{
+    const abs=Math.abs(p.r), dir=p.r>0?'↑ прямая':'↓ обратная';
+    const str=abs>0.6?'сильная':abs>0.3?'умеренная':'слабая';
+    const col=abs>0.5?'var(--gold)':'var(--text3)';
+    return `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)"><span style="color:${col};font-weight:600">${p.la} → ${p.lb}</span><br><span style="color:var(--text3);font-size:12px">${dir} связь, ${str} (r = ${p.r.toFixed(2)})</span></div>`;
+  }).join('');
+}
+
+// ── HISTORY ──
+function renderHistory() {
+  const data = load();
+  const el = document.getElementById('historyList');
+  const ME = ['','😔','😕','😐','🙂','😊'];
+  const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  if (!data.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div style="font-size:14px;color:var(--text3)">Записей пока нет.<br>Начни с первого дня.</div></div>'; return; }
+  el.innerHTML=data.map((d,idx)=>{
+    const dt=new Date(d.date+'T12:00:00');
+    const ds=`${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()}`;
+    const notes=[d.notes?.moment,d.notes?.insight,d.notes?.poetry].filter(Boolean).join(' · ');
+    const hc=d.habits?d.habits.filter(Boolean).length:0;
+    return `<div class="history-item" style="animation-delay:${idx*.04}s">
+      <div class="history-date">${ds} ${ME[d.moodEmoji]||''}</div>
+      <div class="history-metrics">
+        <div class="hm">⚡ <strong>${d.energy}</strong></div>
+        <div class="hm">🎭 <strong>${d.mood}</strong></div>
+        <div class="hm">🌙 <strong>${d.sleeph}ч</strong></div>
+        <div class="hm">😰 <strong>${d.anxiety}</strong></div>
+        <div class="hm">✅ <strong>${hc}/${HABITS.length}</strong></div>
+      </div>
+      ${notes?`<div class="history-note">${notes}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── EXPORT CSV ──
+function exportCSV() {
+  const data = load();
+  if (!data.length) { showToast('Нет данных для экспорта'); return; }
+  const headers = ['Дата','Настроение','Энергия','Настроение(1-10)','Тревога','Мотивация','Социальность','Тело','Продуктивность','Избегание','Часов сна','Качество сна',...HABITS,'Момент дня','Инсайт','Стихи'];
+  const rows = data.map(d=>[
+    d.date, d.moodEmoji, d.energy, d.mood, d.anxiety, d.motiv, d.social, d.body, d.prod, d.avoid, d.sleeph, d.sleepq,
+    ...(d.habits||HABITS.map(()=>false)).map(v=>v?'1':'0'),
+    `"${(d.notes?.moment||'').replace(/"/g,'""')}"`,
+    `"${(d.notes?.insight||'').replace(/"/g,'""')}"`,
+    `"${(d.notes?.poetry||'').replace(/"/g,'""')}"`,
+  ]);
+  const csv = [headers, ...rows].map(r=>r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`tracker_${todayKey()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ CSV скачан');
+}
+
+// ── CLEAR ──
+function clearAll() {
+  if (confirm('Удалить все записи? Это нельзя отменить.')) {
+    localStorage.removeItem(KEY);
+    showToast('Данные удалены');
+    renderDash(); renderHistory();
+  }
+}
+
+// ── GOOGLE SHEETS ──
+function saveGASUrl() {
+  const url = document.getElementById('gas-url').value.trim();
+  if (!url) { showToast('Вставь URL'); return; }
+  localStorage.setItem('gas_url', url);
+  // Sync all existing data
+  const data = load();
+  data.forEach(entry => syncToSheets(url, entry));
+  showToast('✓ Сохранено и синхронизировано');
+}
+
+function syncToSheets(url, entry) {
+  fetch(url, {
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(entry)
+  }).catch(()=>{});
+}
+
+function copyGASCode() {
+  const code = `function doPost(e) {
+  const data = JSON.parse(e.postData.contents);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Трекер');
+  if (!sheet) {
+    sheet = ss.insertSheet('Трекер');
+    sheet.appendRow(['Дата','Энергия','Настроение','Тревога','Мотивация','Социальность','Продуктивность','Избегание','Часов сна','Качество сна','Привычки','Момент','Инсайт','Стихи']);
+  }
+  sheet.appendRow([
+    data.date, data.energy, data.mood, data.anxiety, data.motiv,
+    data.social, data.prod, data.avoid, data.sleeph, data.sleepq,
+    (data.habits||[]).filter(Boolean).length,
+    data.notes?.moment||'', data.notes?.insight||'', data.notes?.poetry||''
+  ]);
+  return ContentService.createTextOutput('ok');
+}`;
+  navigator.clipboard?.writeText(code).then(()=>showToast('✓ Код скопирован')).catch(()=>showToast('Скопируй код вручную'));
+}
+
+// ── LOAD GAS URL ──
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('gas_url');
+  if (saved) document.getElementById('gas-url').value = saved;
+});
+</script>
+</body>
+</html>
